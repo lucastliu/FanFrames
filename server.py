@@ -96,12 +96,12 @@ while True:
 	
 
 
-	if count<500:
+	if count<100:
 		count +=1 
 		fps.update()
-	if count==500:
+	if count==100:
 		fps.stop()
-		print("[INFO] elasped time to receive 500 frames: {:.2f}".format(fps.elapsed()))
+		print("[INFO] elasped time to receive 100 frames: {:.2f}".format(fps.elapsed()))
 		print("[INFO] approx. FPS: {:.2f}".format(fps.fps()))
 		count +=1
 
