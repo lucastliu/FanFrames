@@ -8,6 +8,7 @@ import argparse
 import socket
 import time
 import cv2
+import numpy as np 
 
 # construct the argument parser and parse the arguments
 ap = argparse.ArgumentParser()
@@ -52,20 +53,28 @@ time.sleep(2.0)
 
 count=0
 fps = FPS().start()
-
+prev_frame = None
  
 while True:
 	# read the frame from the camera and send it to the server
 	frame = vs.read()
+	if prev_frame is None:
+		prev_frame = np.zeros(frame.shape)
+	comp = prev_frame == frame
+	if comp.all():
+		# print("matched")
+		continue
+	else:
+		prev_frame = frame 
 	if count == 0 and args["messaging"] ==2:
 		rr_sender.send_image(clientIP, frame)
 	sender.send_image(clientIP, frame)
-	if count<500:
+	if count<100:
 		count +=1 
 		fps.update()
-	if count==500:
+	if count==100:
 		fps.stop()
-		print("[INFO] elasped time to send 500 frames: {:.2f}".format(fps.elapsed()))
+		print("[INFO] elasped time to send 100 frames: {:.2f}".format(fps.elapsed()))
 		print("[INFO] approx. FPS: {:.2f}".format(fps.fps()))
 		count +=1
 	
