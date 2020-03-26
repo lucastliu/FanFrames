@@ -44,7 +44,7 @@ clientIP = socket.gethostbyname(clientName)
 
 if args["multithread"] == 1:
 	vs = WebcamVideoStream(src=0).start()
-elif args["mulithread"] == 0:
+elif args["multithread"] == 0:
 	vs = VideoStream(src=0).start()
 else:
 	raise ValueError("multithread input value must be 0 or 1")
