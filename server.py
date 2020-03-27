@@ -78,7 +78,6 @@ ACTIVE_CHECK_SECONDS = ESTIMATED_NUM_PIS * ACTIVE_CHECK_PERIOD
 
 
 count=0
-fps = FPS().start()
  
 # start looping over all the frames
 while True:
@@ -86,11 +85,14 @@ while True:
 	# the receipt
 	if args["messaging"] == 2 and count == 0:
 		(clientIP, frame) = imageHub_rr.recv_image()
+		fps = FPS().start()
 		imageHub_rr.send_reply(b'OK')
 		imageHub = imagezmq.ImageHub(open_port='tcp://{}:5566'.format(clientIP), REQ_REP = False)
 
 	else:
 		(clientIP, frame) = imageHub.recv_image()
+		if count ==0:
+			fps = FPS().start()
 		if args["messaging"] == 0:
 			imageHub.send_reply(b'OK')
 	
