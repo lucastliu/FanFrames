@@ -1,0 +1,10 @@
+{
+    "SourceS3BucketParameter" : "alambda",
+    "ImageProcessorSourceS3KeyParameter" : "src/lambda_imageprocessor.zip",
+    "FrameFetcherSourceS3KeyParameter" : "src/lambda_framefetcher.zip",
+    "FrameS3BucketNameParameter" : "bvid",
+    "FrameFetcherApiResourcePathPart" : "enrichedframe",
+    "ApiGatewayRestApiNameParameter" : "VidAnalyzerRestApi",
+    "ApiGatewayStageNameParameter": "development",
+    "ApiGatewayUsagePlanNameParameter" : "development-plan"
+}
