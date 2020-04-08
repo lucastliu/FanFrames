@@ -32,7 +32,8 @@ args = vars(ap.parse_args())
 if args["messaging"] == 0:
 	imageHub = imagezmq.ImageHub()
 elif args["messaging"] == 1:
-	imageHub = imagezmq.ImageHub(open_port='tcp://localhost:5566', REQ_REP = False)
+	# imageHub = imagezmq.ImageHub(open_port='tcp://localhost:5556', REQ_REP = False)
+	imageHub = imagezmq.ImageHub(open_port='tcp://192.168.0.140:5588', REQ_REP = False) #Ryan's laptop
 elif args["messaging"] == 2:
 	imageHub_rr = imagezmq.ImageHub()
 else:
@@ -90,8 +91,10 @@ while True:
 		imageHub = imagezmq.ImageHub(open_port='tcp://{}:5566'.format(clientIP), REQ_REP = False)
 
 	else:
+		# print("ready to receive")
 		(clientIP, frame) = imageHub.recv_image()
-		if count ==0:
+		# print("received image")
+		if count == 0:
 			fps = FPS().start()
 		if args["messaging"] == 0:
 			imageHub.send_reply(b'OK')

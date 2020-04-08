@@ -28,7 +28,7 @@ if args["messaging"] == 0:
 	sender = imagezmq.ImageSender(connect_to="tcp://{}:5555".format(
 		args["server_ip"]))
 elif args["messaging"] == 1:
-	sender = imagezmq.ImageSender(connect_to="tcp://*:5566", REQ_REP = False)
+	sender = imagezmq.ImageSender(connect_to="tcp://*:5588", REQ_REP = False)
 elif args["messaging"] == 2:
 	sender = imagezmq.ImageSender(connect_to="tcp://*:5566", REQ_REP = False)
 	rr_sender = imagezmq.ImageSender(connect_to="tcp://{}:5555".format(
@@ -68,7 +68,9 @@ while True:
 		prev_frame = frame 
 	if count == 0 and args["messaging"] ==2:
 		rr_sender.send_image(clientIP, frame)
+	# print("about to send")
 	sender.send_image(clientIP, frame)
+	# print('sent')
 	if count<100:
 		count +=1 
 		fps.update()
