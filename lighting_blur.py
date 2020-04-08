@@ -42,8 +42,8 @@ while(1):
 		cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
     img = cv2.putText(img, "{}: {:.2f}".format(light_text, mean), (10, 60),
 		cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
-    img = cv2.putText(img, "{}: {:.2f}".format(contr_text, std), (10, 90),
-		cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+    # img = cv2.putText(img, "{}: {:.2f}".format(contr_text, std), (10, 90),
+	# 	cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
     cv2.imshow('frame',img)
     k = cv2.waitKey(30) & 0xff
