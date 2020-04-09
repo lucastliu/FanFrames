@@ -10,6 +10,7 @@ import imagezmq
 import argparse
 import imutils
 import cv2
+import csv 
 
 # construct the argument parser and parse the arguments
 ap = argparse.ArgumentParser()
@@ -79,7 +80,8 @@ ACTIVE_CHECK_SECONDS = ESTIMATED_NUM_PIS * ACTIVE_CHECK_PERIOD
 
 
 count=0
- 
+time_data = ['']*100
+
 # start looping over all the frames
 while True:
 	# receive client name and frame from the client and acknowledge
@@ -101,14 +103,21 @@ while True:
 	
 
 
-	if count<100:
+	if count<99:
 		count +=1 
 		fps.update()
-	if count==100:
+	if count==99:
 		fps.stop()
 		print("[INFO] elasped time to receive 100 frames: {:.2f}".format(fps.elapsed()))
 		print("[INFO] approx. FPS: {:.2f}".format(fps.fps()))
 		count +=1
+		filename = 'server_time_data.csv'
+		with open(filename, 'w') as csvfile:  
+			# creating a csv writer object  
+			csvwriter = csv.writer(csvfile)  
+				
+			# writing the data rows  
+			csvwriter.writerows(time_data) 
 
 	# # if a device is not in the last active dictionary then it means
 	# # that its a newly connected device
@@ -184,6 +193,11 @@ while True:
 	# for (i, montage) in enumerate(montages):
 	# 	cv2.imshow("Video received from client ({})".format(i),
 	# 		montage)
+
+	if count<=99:
+		dateTimeObj = datetime.now()
+		time_data[count] = [str(count), str(dateTimeObj.hour) + ':' + str(dateTimeObj.minute) + 
+							':' + str(dateTimeObj.second) + '.' + str(dateTimeObj.microsecond), frame]
 
 	# # detect any kepresses
 	# key = cv2.waitKey(1) & 0xFF

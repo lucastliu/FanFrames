@@ -9,6 +9,8 @@ import socket
 import time
 import cv2
 import numpy as np 
+import csv
+from datetime import datetime   
 
 # construct the argument parser and parse the arguments
 ap = argparse.ArgumentParser()
@@ -54,7 +56,8 @@ time.sleep(2.0)
 count=0
 fps = FPS().start()
 prev_frame = None
- 
+time_data = ['']*100
+
 while True:
 	# read the frame from the camera and send it to the server
 	frame = vs.read()
@@ -66,17 +69,32 @@ while True:
 		continue
 	else:
 		prev_frame = frame 
+
+	if count<=99:
+		dateTimeObj = datetime.now()
+		time_data[count] = [str(count), str(dateTimeObj.hour) + ':' + str(dateTimeObj.minute) + 
+							':' + str(dateTimeObj.second) + '.' + str(dateTimeObj.microsecond), frame]
+
 	if count == 0 and args["messaging"] ==2:
 		rr_sender.send_image(clientIP, frame)
 	# print("about to send")
 	sender.send_image(clientIP, frame)
 	# print('sent')
-	if count<100:
+	if count<99:
 		count +=1 
 		fps.update()
-	if count==100:
+
+	if count==99:
 		fps.stop()
 		print("[INFO] elasped time to send 100 frames: {:.2f}".format(fps.elapsed()))
 		print("[INFO] approx. FPS: {:.2f}".format(fps.fps()))
 		count +=1
+		filename = 'client_time_data.csv'
+		with open(filename, 'w') as csvfile:  
+			# creating a csv writer object  
+			csvwriter = csv.writer(csvfile)  
+				
+			# writing the data rows  
+			csvwriter.writerows(time_data) 
+
 	
