@@ -9,7 +9,7 @@ import datetime
 import base64
 import boto3
 import json
-import cPickle
+import pickle
 import cv2
 from multiprocessing import Pool
 import numpy as np
@@ -46,20 +46,20 @@ def send_jpg(frame_jpg, frame_count, enable_kinesis=True, enable_rekog=False, wr
         }
 
         if write_file:
-            print "Writing file img_{}.jpg".format(frame_count)
+            print("Writing file img_{}.jpg".format(frame_count))
             target = open("img_{}.jpg".format(frame_count), 'w')
             target.write(img_bytes)
             target.close()
 
         #put encoded image in kinesis stream
         if enable_kinesis:
-            print "Sending image to Kinesis"
+            print("Sending image to Kinesis")
             response = kinesis_client.put_record(
                 StreamName="FrameStream",
-                Data=cPickle.dumps(frame_package),
+                Data=pickle.dumps(frame_package),
                 PartitionKey="partitionkey"
             )
-            print response
+            print(response)
 
         if enable_rekog:
             response = rekog_client.detect_labels(
@@ -69,10 +69,10 @@ def send_jpg(frame_jpg, frame_count, enable_kinesis=True, enable_rekog=False, wr
                 MaxLabels=rekog_max_labels,
                 MinConfidence=rekog_min_conf
             )
-            print response
+            print(response)
 
     except Exception as e:
-        print e
+        print(e)
 
 
 def main():

@@ -10,7 +10,7 @@ import time
 import decimal
 import uuid
 import json
-import cPickle
+import pickle
 import boto3
 import pytz
 from pytz import timezone
@@ -29,7 +29,7 @@ def replace_float(obj):
             obj[i] = replace_float(obj[i])
             return obj
     elif isinstance(obj, dict):
-        for k in obj.iterkeys():
+        for k in iter(obj.keys()):
             obj[k] = replace_float(obj[k])
             return obj
     elif isinstance(obj, float):
@@ -82,7 +82,7 @@ def process_image(event, context):
     for record in event['Records']:
 
         frame_package_b64 = record['kinesis']['data']
-        frame_package = cPickle.loads(base64.b64decode(frame_package_b64))
+        frame_package = pickle.loads(base64.b64decode(frame_package_b64))
 
         img_bytes = frame_package["ImageBytes"]
         approx_capture_ts = frame_package["ApproximateCaptureTime"]
