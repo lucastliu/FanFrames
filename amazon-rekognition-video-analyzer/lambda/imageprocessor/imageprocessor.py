@@ -15,6 +15,8 @@ import boto3
 import pytz
 from pytz import timezone
 from copy import deepcopy
+import cv2
+import numpy as np
 
 
 def load_config():
@@ -51,6 +53,38 @@ def convert_ts(ts, config):
     localized_dt = utc_dt.astimezone(tz)
 
     return localized_dt
+
+
+def variance_of_laplacian(image): #Added this
+	# compute the Laplacian of the image and then return the focus
+	# measure, which is simply the variance of the Laplacian
+	return cv2.Laplacian(image, cv2.CV_64F).var()
+
+def compute_frame_blur_light(frame): #Added this
+	blur_threshold=100
+	light_lower = 100
+	light_upper = 150
+	frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+	fm = variance_of_laplacian(frame_gray)
+	blur_text = "Not Blurry"
+
+	if fm < blur_threshold:
+		blur_text = "Blurry"
+
+	light_text = 'Good Lighting '
+	mean, std = cv2.meanStdDev(frame_gray)
+	mean = mean[0][0]
+	std = std[0][0]
+	if mean > light_upper:
+		light_text = "Too Bright"
+	elif mean < light_lower:
+		light_text = 'Too Dark'
+
+	print("{}: {:.2f}".format(blur_text, fm))
+	print("{}: {:.2f}".format(light_text, mean))
+	return blur_text, fm, light_text, mean
+
 
 
 def process_image(event, context):
@@ -136,6 +170,19 @@ def process_image(event, context):
             new_label['Confidence'] = decimal.Decimal(str(conf))
             new_labels.append(new_label)
 
+        #Perform blur/light detection
+        hi = np.asarray(img_bytes, dtype="uint8")
+        image = cv2.imdecode(hi, cv2.IMREAD_COLOR)
+        blur_text, fm, light_text, mean = compute_frame_blur_light(image)
+        new_label = {}
+        new_label['Name'] = str(blur_text)
+        new_label['Confidence'] = decimal.Decimal(str(fm))
+        new_labels.append(new_label)
+
+        new_label = {}
+        new_label['Name'] = str(light_text)
+        new_label['Confidence'] = decimal.Decimal(str(mean))
+        new_labels.append(new_label)
 
         # #Send out notification(s), if needed
         # if len(labels_on_watch_list) > 0 \
@@ -176,16 +223,6 @@ def process_image(event, context):
             Key=s3_key,
             Body=img_bytes
         )
-
-        #Check types real quick
-        print('Types')
-        print(type(frame_id))
-        print(type(processed_timestamp))
-        print(type(approx_capture_timestamp))
-        print(type(rekog_response['Labels'][0]['Confidence']))
-        print(type(year + mon))
-        print(type(s3_bucket))
-        print(type(s3_key))
 
         #Persist frame data in dynamodb
 
