@@ -8,10 +8,10 @@ Link to the original repository (aws-samples): https://github.com/aws-samples/am
 Some slight modifications were made to this project, mainly in the lambda functions:
 * The SMS alerts and watch list portion of the imageprocessor lambda was removed. 
 * Modified the item being written to DynamoDB so that it is formatted correctly (writing was previously failing)
-
-Make sure that you setup a python virtual environment with python 2.7. The lambdas deployed also run on python 2.7. as described in Preparing your Development Environment.  
-
-The default bucket names have been filled out in the config files on this repo. 'alambda' is the name of the S3 bucket that will be created to contain the lambda functions. 'bvid' is the name of the S3 bucket where the frames are stored. If you want to chnge those names, make sure to change them in all necessary json config files, as described below.  
+* Originally setup with Python 2.7, now updated to run with Python 3.   
+* The default bucket names have been filled out in the config files on this repo. 'alambda' is the name of the S3 bucket that will be created to contain the lambda functions. 'bvid' is the name of the S3 bucket where the frames are stored. If you want to chnge those names, make sure to change them in all necessary json config files, as described below.  
+* S3 bucket names and resource names must be globally unique. 
+* check on AWS console to ensure that lambda functions are running the correct Python runtime version 
 
 The rest of the readme is as it was from the original project linked above!
 
