@@ -116,6 +116,9 @@ while True:
 			# creating a csv writer object  
 			csvwriter = csv.writer(csvfile)  
 				
+			# writing the headers
+			csvwriter.writerow(['count', 'time', 'frame']) 
+
 			# writing the data rows  
 			csvwriter.writerows(time_data) 
 
