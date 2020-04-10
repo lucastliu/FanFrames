@@ -12,6 +12,17 @@ import numpy as np
 import csv
 from datetime import datetime   
 
+
+
+def variance_of_laplacian(image):
+	# compute the Laplacian of the image and then return the focus
+	# measure, which is simply the variance of the Laplacian
+	return cv2.Laplacian(image, cv2.CV_64F).var()
+
+blur_threshold=100
+light_lower = 100
+light_upper = 150
+
 # construct the argument parser and parse the arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-s", "--server-ip", required=True,
@@ -20,6 +31,8 @@ ap.add_argument("-ms", "--messaging", default=0, type=int,
 	help="type of messaging (default is 0: REQ/REP; 1 is PUB/SUB, 2 is REQ/REP + PUB/SUB)")
 ap.add_argument("-t", "--multithread", default=1, type=int,
 	help="single/multithreading (default is 1: multithreaded; 0 single threaded)")
+ap.add_argument("-bl", "--bl_li", default=0, type=int,
+	help="run blur and lighting checks on client")
 
 args = vars(ap.parse_args())
 
@@ -69,6 +82,26 @@ while True:
 		continue
 	else:
 		prev_frame = frame 
+
+	if args["bl_li"] == 1:
+		
+		frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+		fm = variance_of_laplacian(frame_gray)
+		blur_text = "Not Blurry"
+
+		if fm < blur_threshold:
+			blur_text = "Blurry"
+
+		light_text = 'Good Lighting '
+		mean, std = cv2.meanStdDev(frame_gray)
+		mean = mean[0][0]
+		std = std[0][0]
+		if mean > light_upper:
+			light_text = "Too Bright"
+		elif mean < light_lower:
+			light_text = 'Too Dark'
+
 
 	if count<=99:
 		dateTimeObj = datetime.now()

@@ -12,6 +12,18 @@ import imutils
 import cv2
 import csv 
 
+
+def variance_of_laplacian(image):
+	# compute the Laplacian of the image and then return the focus
+	# measure, which is simply the variance of the Laplacian
+	return cv2.Laplacian(image, cv2.CV_64F).var()
+
+
+blur_threshold=100
+light_lower = 100
+light_upper = 150
+
+
 # construct the argument parser and parse the arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-p", "--prototxt", required=True,
@@ -26,6 +38,8 @@ ap.add_argument("-mH", "--montageH", required=True, type=int,
 	help="montage frame height")
 ap.add_argument("-ms", "--messaging", default=0, type=int,
 	help="type of messaging (default is 0: REQ/REP; 1 is PUB/SUB, 2 is REQ/REP + PUB/SUB)")
+ap.add_argument("-bl", "--bl_li", default=0, type=int,
+	help="run blur and lighting checks on server")
 
 args = vars(ap.parse_args())
 
@@ -40,22 +54,22 @@ elif args["messaging"] == 2:
 else:
 	raise ValueError("messaging input value must be 0, 1, or 2")
 
-# # initialize the list of class labels MobileNet SSD was trained to
-# # detect, then generate a set of bounding box colors for each class
-# CLASSES = ["background", "aeroplane", "bicycle", "bird", "boat",
-# 	"bottle", "bus", "car", "cat", "chair", "cow", "diningtable",
-# 	"dog", "horse", "motorbike", "person", "pottedplant", "sheep",
-# 	"sofa", "train", "tvmonitor"]
+# initialize the list of class labels MobileNet SSD was trained to
+# detect, then generate a set of bounding box colors for each class
+CLASSES = ["background", "aeroplane", "bicycle", "bird", "boat",
+	"bottle", "bus", "car", "cat", "chair", "cow", "diningtable",
+	"dog", "horse", "motorbike", "person", "pottedplant", "sheep",
+	"sofa", "train", "tvmonitor"]
 
-# # load our serialized model from disk
-# print("[INFO] loading model...")
-# net = cv2.dnn.readNetFromCaffe(args["prototxt"], args["model"])
+# load our serialized model from disk
+print("[INFO] loading model...")
+net = cv2.dnn.readNetFromCaffe(args["prototxt"], args["model"])
 
-# # initialize the consider set (class labels we care about and want
-# # to count), the object count dictionary, and the frame  dictionary
-# CONSIDER = set(["dog", "person", "car"])
-# objCount = {obj: 0 for obj in CONSIDER}
-# frameDict = {}
+# initialize the consider set (class labels we care about and want
+# to count), the object count dictionary, and the frame  dictionary
+CONSIDER = set(["dog", "person", "car"])
+objCount = {obj: 0 for obj in CONSIDER}
+frameDict = {}
 
 # initialize the dictionary which will contain  information regarding
 # when a device was last active, then store the last time the check
@@ -70,12 +84,12 @@ ESTIMATED_NUM_PIS = 4
 ACTIVE_CHECK_PERIOD = 10
 ACTIVE_CHECK_SECONDS = ESTIMATED_NUM_PIS * ACTIVE_CHECK_PERIOD
 
-# # assign montage width and height so we can view all incoming frames
-# # in a single "dashboard"
-# mW = args["montageW"]
-# mH = args["montageH"]
-# print("[INFO] detecting: {}...".format(", ".join(obj for obj in
-# 	CONSIDER)))
+# assign montage width and height so we can view all incoming frames
+# in a single "dashboard"
+mW = args["montageW"]
+mH = args["montageH"]
+print("[INFO] detecting: {}...".format(", ".join(obj for obj in
+	CONSIDER)))
 
 
 
@@ -101,6 +115,25 @@ while True:
 		if args["messaging"] == 0:
 			imageHub.send_reply(b'OK')
 	
+	if args["bl_li"] == 1:
+		
+		frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+		fm = variance_of_laplacian(frame_gray)
+		blur_text = "Not Blurry"
+
+		if fm < blur_threshold:
+			blur_text = "Blurry"
+
+		light_text = 'Good Lighting '
+		mean, std = cv2.meanStdDev(frame_gray)
+		mean = mean[0][0]
+		std = std[0][0]
+		if mean > light_upper:
+			light_text = "Too Bright"
+		elif mean < light_lower:
+			light_text = 'Too Dark'
+
 
 
 	if count<99:
@@ -122,49 +155,49 @@ while True:
 			# writing the data rows  
 			csvwriter.writerows(time_data) 
 
-	# # if a device is not in the last active dictionary then it means
-	# # that its a newly connected device
-	# if clientIP not in lastActive.keys():
-	# 	print("[INFO] receiving data from {}...".format(clientIP))
+	# if a device is not in the last active dictionary then it means
+	# that its a newly connected device
+	if clientIP not in lastActive.keys():
+		print("[INFO] receiving data from {}...".format(clientIP))
 
-	# # record the last active time for the device from which we just
-	# # received a frame
-	# lastActive[clientIP] = datetime.now()
+	# record the last active time for the device from which we just
+	# received a frame
+	lastActive[clientIP] = datetime.now()
 
-	# # resize the frame to have a maximum width of 400 pixels, then
-	# # grab the frame dimensions and construct a blob
-	# frame = imutils.resize(frame, width=400)
-	# (h, w) = frame.shape[:2]
-	# blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300, 300)),
-	# 	0.007843, (300, 300), 127.5)
+	# resize the frame to have a maximum width of 400 pixels, then
+	# grab the frame dimensions and construct a blob
+	frame = imutils.resize(frame, width=400)
+	(h, w) = frame.shape[:2]
+	blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300, 300)),
+		0.007843, (300, 300), 127.5)
 
-	# # # pass the blob through the network and obtain the detections and
-	# # # predictions
-	# # net.setInput(blob)
-	# # detections = net.forward()
+	# pass the blob through the network and obtain the detections and
+	# predictions
+	net.setInput(blob)
+	detections = net.forward()
 
-	# # # reset the object count for each object in the CONSIDER set
-	# # objCount = {obj: 0 for obj in CONSIDER}
+	# # reset the object count for each object in the CONSIDER set
+	# objCount = {obj: 0 for obj in CONSIDER}
 
-	# # # loop over the detections
-	# # for i in np.arange(0, detections.shape[2]):
-	# # 	# extract the confidence (i.e., probability) associated with
-	# # 	# the prediction
-	# # 	confidence = detections[0, 0, i, 2]
+	# # loop over the detections
+	# for i in np.arange(0, detections.shape[2]):
+	# 	# extract the confidence (i.e., probability) associated with
+	# 	# the prediction
+	# 	confidence = detections[0, 0, i, 2]
 
-	# # 	# filter out weak detections by ensuring the confidence is
-	# # 	# greater than the minimum confidence
-	# # 	if confidence > args["confidence"]:
-	# # 		# extract the index of the class label from the
-	# # 		# detections
-	# # 		idx = int(detections[0, 0, i, 1])
+	# 	# filter out weak detections by ensuring the confidence is
+	# 	# greater than the minimum confidence
+	# 	if confidence > args["confidence"]:
+	# 		# extract the index of the class label from the
+	# 		# detections
+	# 		idx = int(detections[0, 0, i, 1])
 
-	# # 		# check to see if the predicted class is in the set of
-	# # 		# classes that need to be considered
-	# # 		if CLASSES[idx] in CONSIDER:
-	# # 			# increment the count of the particular object
-	# # 			# detected in the frame
-	# # 			objCount[CLASSES[idx]] += 1
+	# 		# check to see if the predicted class is in the set of
+	# 		# classes that need to be considered
+	# 		if CLASSES[idx] in CONSIDER:
+	# 			# increment the count of the particular object
+	# 			# detected in the frame
+	# 			objCount[CLASSES[idx]] += 1
 
 	# # 			# compute the (x, y)-coordinates of the bounding box
 	# # 			# for the object
