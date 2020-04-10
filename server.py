@@ -38,7 +38,7 @@ ap.add_argument("-mH", "--montageH", required=True, type=int,
 	help="montage frame height")
 ap.add_argument("-ms", "--messaging", default=0, type=int,
 	help="type of messaging (default is 0: REQ/REP; 1 is PUB/SUB, 2 is REQ/REP + PUB/SUB)")
-ap.add_argument("-bl", "--bl_li", default=0, type=int,
+ap.add_argument("-bl", "--bl_li", default=1, type=int,
 	help="run blur and lighting checks on server")
 
 args = vars(ap.parse_args())
