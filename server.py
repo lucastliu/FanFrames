@@ -13,6 +13,13 @@ import cv2
 import csv 
 
 
+#-- load face detection files
+face_cascade_name = 'face_detection/data/haarcascade_frontalface_alt.xml'
+face_cascade = cv2.CascadeClassifier()
+if not face_cascade.load(cv2.samples.findFile(face_cascade_name)):
+    print('--(!)Error loading face cascade')
+    exit(0)
+
 def variance_of_laplacian(image):
 	# compute the Laplacian of the image and then return the focus
 	# measure, which is simply the variance of the Laplacian
@@ -116,8 +123,17 @@ while True:
 			imageHub.send_reply(b'OK')
 	
 	if args["bl_li"] == 1:
-		
+
 		frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+		frame_gray = cv2.equalizeHist(frame_gray)
+		#-- Detect faces
+		faces = face_cascade.detectMultiScale(frame_gray)
+		for (x,y,w,h) in faces:
+			center = (x + w//2, y + h//2)
+			frame = cv2.ellipse(frame, center, (w//2, h//2), 0, 0, 360, (255, 0, 255), 4) # this line actually modifies the frame with the drawing
+			faceROI = frame_gray[y:y+h,x:x+w]
+		#-- end face detection
 
 		fm = variance_of_laplacian(frame_gray)
 		blur_text = "Not Blurry"
