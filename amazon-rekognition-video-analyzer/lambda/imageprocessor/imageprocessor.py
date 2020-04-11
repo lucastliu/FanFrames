@@ -17,6 +17,7 @@ from pytz import timezone
 from copy import deepcopy
 import cv2
 import numpy as np
+from xml.dom import minidom
 
 def load_config():
     '''Load configuration from file.'''
@@ -52,6 +53,27 @@ def convert_ts(ts, config):
     localized_dt = utc_dt.astimezone(tz)
 
     return localized_dt
+
+
+def read_xml(s3, bucketname, filename): # added this
+    obj = s3.Object(bucketname, filename)
+    file_data = obj.get()['Body'].read()
+
+    # parse xml
+    return minidom.parseString(file_data)
+
+
+def faceDetect(frame, face_cascade): # added this
+    frame_gray = cv2.cvtColor(frame, cv.COLOR_BGR2GRAY)
+    frame_gray = cv2.equalizeHist(frame_gray)
+    faces = face_cascade.detectMultiScale(frame_gray)
+    count = 0
+    for (x,y,w,h) in faces:
+        center = (x + w//2, y + h//2)
+        frame = cv2.ellipse(frame, center, (w//2, h//2), 0, 0, 360, (255, 0, 255), 4)
+        faceROI = frame_gray[y:y+h,x:x+w]
+        count = count + 1
+    return count
 
 
 def variance_of_laplacian(image): #Added this
@@ -109,6 +131,15 @@ def process_image(event, context):
     label_watch_min_conf = float(config["label_watch_min_conf"])
     label_watch_phone_num = config.get("label_watch_phone_num", "")
     label_watch_sns_topic_arn = config.get("label_watch_sns_topic_arn", "")
+
+
+    
+    # face detection
+    s3 = boto3.resource('s3') # added this
+    face_cascade = cv2.CascadeClassifier()
+
+    if not face_cascade.load(read_xml(s3, 'clambda', 'haarcascade_frontalface_alt.xml')): # this is a hardcoded nameset
+        print('--(!)Error loading face cascade')
 
     #Iterate on frames fetched from Kinesis
     for record in event['Records']:
@@ -180,6 +211,13 @@ def process_image(event, context):
         new_label = {}
         new_label['Name'] = str(light_text)
         new_label['Confidence'] = decimal.Decimal(str(mean))
+        new_labels.append(new_label)
+
+        # face detection
+        faces_count = faceDetect(image, face_cascade)
+        new_label = {}
+        new_label['Name'] = Faces
+        new_label['Quantity'] = decimal.Decimal(str(faces_count))
         new_labels.append(new_label)
 
         #Store frame image in S3
