@@ -33,6 +33,8 @@ ap.add_argument("-t", "--multithread", default=1, type=int,
 	help="single/multithreading (default is 1: multithreaded; 0 single threaded)")
 ap.add_argument("-bl", "--bl_li", default=0, type=int,
 	help="run blur and lighting checks on client")
+ap.add_argument("-ex", "--exp_num", required=True,
+	help="for naming files")
 
 args = vars(ap.parse_args())
 
@@ -69,7 +71,7 @@ time.sleep(2.0)
 count=0
 fps = FPS().start()
 prev_frame = None
-time_data = ['']*100
+time_data = ['']*1000
 
 while True:
 	# read the frame from the camera and send it to the server
@@ -103,26 +105,26 @@ while True:
 			light_text = 'Too Dark'
 
 
-	if count<=99:
+	if count<=999:
 		dateTimeObj = datetime.now()
 		time_data[count] = [str(count), str(dateTimeObj.hour) + ':' + str(dateTimeObj.minute) + 
 							':' + str(dateTimeObj.second) + '.' + str(dateTimeObj.microsecond), frame]
 
 	if count == 0 and args["messaging"] ==2:
 		rr_sender.send_image(clientIP, frame)
-	# print("about to send")
+
 	sender.send_image(clientIP, frame)
-	# print('sent')
+
 	if count<99:
-		count +=1 
 		fps.update()
 
-	if count==99:
+	elif count==99:
 		fps.stop()
 		print("[INFO] elasped time to send 100 frames: {:.2f}".format(fps.elapsed()))
 		print("[INFO] approx. FPS: {:.2f}".format(fps.fps()))
-		count +=1
-		filename = 'client_time_data.csv'
+		
+	elif count == 999:
+		filename = 'client_time_data_'+args['exp_num']+'.csv'
 		with open(filename, 'w') as csvfile:  
 			# creating a csv writer object  
 			csvwriter = csv.writer(csvfile)  
@@ -130,5 +132,7 @@ while True:
 			csvwriter.writerow(['count', 'time', 'frame']) 	
 			# writing the data rows  
 			csvwriter.writerows(time_data) 
+		print('Wrote to csv')
 
+	count +=1 
 	
