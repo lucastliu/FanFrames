@@ -47,6 +47,8 @@ ap.add_argument("-ms", "--messaging", default=0, type=int,
 	help="type of messaging (default is 0: REQ/REP; 1 is PUB/SUB, 2 is REQ/REP + PUB/SUB)")
 ap.add_argument("-bl", "--bl_li", default=1, type=int,
 	help="run blur and lighting checks on server")
+ap.add_argument("-ex", "--exp_num", required=True, 
+	help="for naming files")
 
 args = vars(ap.parse_args())
 
@@ -55,14 +57,14 @@ if args["messaging"] == 0:
 	imageHub = imagezmq.ImageHub()
 elif args["messaging"] == 1:
 	# imageHub = imagezmq.ImageHub(open_port='tcp://localhost:5556', REQ_REP = False)
-	imageHub = imagezmq.ImageHub(open_port='tcp://192.168.0.140:5588', REQ_REP = False) #Ryan's laptop
+	imageHub = imagezmq.ImageHub(open_port='tcp://192.168.0.145:5588', REQ_REP = False) #Ryan's laptop
 elif args["messaging"] == 2:
 	imageHub_rr = imagezmq.ImageHub()
 else:
 	raise ValueError("messaging input value must be 0, 1, or 2")
 
 count=0
-time_data = ['']*100
+time_data = ['']*1000
 
 # start looping over all the frames
 while True:
@@ -123,21 +125,27 @@ while True:
 			faceROI = frame_gray[y:y+h,x:x+w]
 		#-- end face detection
 
-	# display image with face detections 
-	cv2.imshow('frame',frame2)
-	k = cv2.waitKey(30) & 0xff
-	if k == 27:
-		break
+	# # display image with face detections and blur/lighting status
+	# cv2.imshow('frame',frame2)
+	# k = cv2.waitKey(30) & 0xff
+	# if k == 27:
+	# 	break
 
 	if count<99:
-		count +=1 
 		fps.update()
+
+	if count<=999:
+		dateTimeObj = datetime.now()
+		time_data[count] = [str(count), str(dateTimeObj.hour) + ':' + str(dateTimeObj.minute) + 
+							':' + str(dateTimeObj.second) + '.' + str(dateTimeObj.microsecond), frame]
+
 	if count==99:
 		fps.stop()
 		print("[INFO] elasped time to receive 100 frames: {:.2f}".format(fps.elapsed()))
 		print("[INFO] approx. FPS: {:.2f}".format(fps.fps()))
-		count +=1
-		filename = 'server_time_data.csv'
+	
+	if count == 999:
+		filename = 'server_time_data_'+args['exp_num']+'.csv'
 		with open(filename, 'w') as csvfile:  
 			# creating a csv writer object  
 			csvwriter = csv.writer(csvfile)  
@@ -147,12 +155,10 @@ while True:
 
 			# writing the data rows  
 			csvwriter.writerows(time_data) 
+		print('Wrote to csv')
 
 
-	if count<=99:
-		dateTimeObj = datetime.now()
-		time_data[count] = [str(count), str(dateTimeObj.hour) + ':' + str(dateTimeObj.minute) + 
-							':' + str(dateTimeObj.second) + '.' + str(dateTimeObj.microsecond), frame]
+	count +=1 
 
 	
 # do a bit of cleanup

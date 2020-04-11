@@ -2,11 +2,20 @@ import pandas as pd
 import numpy as np 
 import csv 
 import datetime
+import argparse
 
+ap = argparse.ArgumentParser()
+ap.add_argument("-ex", "--exp_num", required=True,
+	help="for naming files")
 
-client_df = pd.read_csv('client_time_data_1.csv')
-server_df = pd.read_csv('server_time_data_1.csv')
-filename = 'times_1.csv'
+args = vars(ap.parse_args())
+
+client_df = pd.read_csv('client_time_data_'+args['exp_num']+'.csv')
+server_df = pd.read_csv('server_time_data_'+args['exp_num']+'.csv')
+filename = 'times_'+args['exp_num']+'.csv'
+
+print(client_df.shape)
+print(server_df.shape)
 
 def calc_time_dif(row):
     # x is client, y is server
