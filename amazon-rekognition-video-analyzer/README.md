@@ -11,7 +11,8 @@ Some slight modifications were made to this project, mainly in the lambda functi
 * Originally setup with Python 2.7, now updated to run with Python 3.   
 * The default bucket names have been filled out in the config files on this repo. 'alambda' is the name of the S3 bucket that will be created to contain the lambda functions. 'bvid' is the name of the S3 bucket where the frames are stored. If you want to chnge those names, make sure to change them in all necessary json config files, as described below.  
 * S3 bucket names and resource names must be globally unique. 
-* check on AWS console to ensure that lambda functions are running the correct Python runtime version 
+* check on AWS console to ensure that lambda functions are running the correct Python runtime version
+* for full updates, you should run pynt deletestack, and possibly manually delete resources from the console before re-run of pynt commands 
 
 The rest of the readme is as it was from the original project linked above!
 
