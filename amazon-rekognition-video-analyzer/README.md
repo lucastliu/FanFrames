@@ -3,6 +3,14 @@ Create a Serverless Pipeline for Video Frame Analysis and Alerting
 Link to the original AWS blog post: https://aws.amazon.com/blogs/machine-learning/create-a-serverless-solution-for-video-frame-analysis-and-alerting/
 Link to the original repository (aws-samples): https://github.com/aws-samples/amazon-rekognition-video-analyzer
 
+## Exta setup steps
+
+After you've gone through the 'Preparing your development environment' and 'configuring the project' there are a couple extra steps to take during the 'build the prototype' steps.
+
+* To perform face detection using cv2 (and not the amazon rekognition originally used in the prototype) you will need to setup an S3 bucket and upload to it the haarcascade_frontalface_alt.xml file from the face_detection directory of this project. You will need to enter the name of this bucket into the imageprocessor function (until we add this to the name to a config file)
+
+* After executing pynt createstack, go onto the AWS console. Under services select Lambda. You should see two lambda functions, framefetcher and imageprocessor. For both framefetcher and imageprocessor click on the function and change the python version from 2.7 to 3.7. (I'll have to change some config files to do this automatically, so please bear with me until then :) )
+
 ## Some extra notes
 
 Some slight modifications were made to this project, mainly in the lambda functions:
