@@ -127,13 +127,6 @@ while True:
 		frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
 		frame_gray = cv2.equalizeHist(frame_gray)
-		#-- Detect faces
-		faces = face_cascade.detectMultiScale(frame_gray)
-		for (x,y,w,h) in faces:
-			center = (x + w//2, y + h//2)
-			frame = cv2.ellipse(frame, center, (w//2, h//2), 0, 0, 360, (255, 0, 255), 4) # this line actually modifies the frame with the drawing
-			faceROI = frame_gray[y:y+h,x:x+w]
-		#-- end face detection
 
 		fm = variance_of_laplacian(frame_gray)
 		blur_text = "Not Blurry"
@@ -150,6 +143,14 @@ while True:
 		elif mean < light_lower:
 			light_text = 'Too Dark'
 
+
+		#-- Detect faces
+		faces = face_cascade.detectMultiScale(frame_gray)
+		for (x,y,w,h) in faces:
+			center = (x + w//2, y + h//2)
+			frame = cv2.ellipse(frame, center, (w//2, h//2), 0, 0, 360, (255, 0, 255), 4) # this line actually modifies the frame with the drawing
+			faceROI = frame_gray[y:y+h,x:x+w]
+		#-- end face detection
 
 
 	if count<99:
