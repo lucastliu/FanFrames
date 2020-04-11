@@ -1,5 +1,5 @@
 # USAGE
-# python client.py --server-ip SERVER_IP
+# python client.py --server-ip SERVER_IP --messaging 1 --exp_num whatever#youwantthatmatchesserver
 
 # import the necessary packages
 from imutils.video import VideoStream, WebcamVideoStream, FPS 

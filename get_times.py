@@ -1,3 +1,6 @@
+# USAGE
+# python get_times.py --exp_num number_in_filenames
+
 import pandas as pd 
 import numpy as np 
 import csv 

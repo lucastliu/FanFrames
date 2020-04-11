@@ -1,5 +1,5 @@
 # USAGE
-# python server.py --prototxt MobileNetSSD_deploy.prototxt --model MobileNetSSD_deploy.caffemodel --montageW 2 --montageH 2
+# python server.py --prototxt MobileNetSSD_deploy.prototxt --model MobileNetSSD_deploy.caffemodel --montageW 2 --montageH 2 --messaging 1 --exp_num whatever#youwantthatmatchesclient
 
 # import the necessary packages
 from imutils import build_montages
