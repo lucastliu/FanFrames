@@ -18,7 +18,6 @@ from copy import deepcopy
 import cv2
 import numpy as np
 
-
 def load_config():
     '''Load configuration from file.'''
     with open('imageprocessor-params.json', 'r') as conf_file:
@@ -93,7 +92,6 @@ def process_image(event, context):
     rekog_client = boto3.client('rekognition')
     sns_client = boto3.client('sns')
     s3_client = boto3.client('s3')
-    #dynamodb = boto3.resource('dynamodb')
     dynamodb = boto3.resource('dynamodb')
 
     #Load config
@@ -170,7 +168,7 @@ def process_image(event, context):
             new_label['Confidence'] = decimal.Decimal(str(conf))
             new_labels.append(new_label)
 
-        #Perform blur/light detection
+        #Perform blur/light detection and add to labels list
         hi = np.asarray(img_bytes, dtype="uint8")
         image = cv2.imdecode(hi, cv2.IMREAD_COLOR)
         blur_text, fm, light_text, mean = compute_frame_blur_light(image)
@@ -184,37 +182,6 @@ def process_image(event, context):
         new_label['Confidence'] = decimal.Decimal(str(mean))
         new_labels.append(new_label)
 
-        # #Send out notification(s), if needed
-        # if len(labels_on_watch_list) > 0 \
-        #         and (label_watch_phone_num or label_watch_sns_topic_arn):
-        #
-        #     notification_txt = 'On {}...\n'.format(now.strftime('%x, %-I:%M %p %Z'))
-        #
-        #     for label in labels_on_watch_list:
-        #
-        #         notification_txt += '- "{}" was detected with {}% confidence.\n'.format(
-        #             label['Name'],
-        #             round(label['Confidence'], 2))
-        #
-        #     print(notification_txt)
-        #
-        #     if label_watch_phone_num:
-        #         sns_client.publish(PhoneNumber=label_watch_phone_num, Message=notification_txt)
-        #
-        #     if label_watch_sns_topic_arn:
-        #         resp = sns_client.publish(
-        #             TopicArn=label_watch_sns_topic_arn,
-        #             Message=json.dumps(
-        #                 {
-        #                     "message": notification_txt,
-        #                     "labels": labels_on_watch_list
-        #                 }
-        #             )
-        #         )
-        #
-        #         if resp.get("MessageId", ""):
-        #             print("Successfully published alert message to SNS.")
-
         #Store frame image in S3
         s3_key = (s3_key_frames_root + '{}/{}/{}/{}/{}.jpg').format(year, mon, day, hour, frame_id)
 
@@ -224,12 +191,20 @@ def process_image(event, context):
             Body=img_bytes
         )
 
+        comp_ts = time.time() - float(25200) #Convert from GMT to PST (subtract time diff in seconds)
+        print(datetime.datetime.fromtimestamp(comp_ts).strftime('%c')) #This is wrong timezone
+        print(datetime.datetime.fromtimestamp(approx_capture_ts).strftime('%c'))
+
+
+        latency = decimal.Decimal(comp_ts - approx_capture_ts)
+
         #Persist frame data in dynamodb
 
         item = {
             'frame_id': frame_id, #string
             'processed_timestamp' : processed_timestamp, #decimal
             'approx_capture_timestamp' : approx_capture_timestamp, #decimal
+            'transmit_compute_latency' : latency,
             #'rekog_labels' : rekog_response['Labels'],
             'rekog_labels' : new_labels,
             #'rekog_labels' : ['cat', 'mouse'],
