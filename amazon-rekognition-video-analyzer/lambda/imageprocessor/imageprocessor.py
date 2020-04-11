@@ -54,17 +54,8 @@ def convert_ts(ts, config):
 
     return localized_dt
 
-
-def read_xml(s3, bucketname, filename): # added this
-    obj = s3.Object(bucketname, filename)
-    file_data = obj.get()['Body'].read()
-
-    # parse xml
-    return minidom.parseString(file_data)
-
-
 def faceDetect(frame, face_cascade): # added this
-    frame_gray = cv2.cvtColor(frame, cv.COLOR_BGR2GRAY)
+    frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     frame_gray = cv2.equalizeHist(frame_gray)
     faces = face_cascade.detectMultiScale(frame_gray)
     count = 0
@@ -73,7 +64,7 @@ def faceDetect(frame, face_cascade): # added this
         frame = cv2.ellipse(frame, center, (w//2, h//2), 0, 0, 360, (255, 0, 255), 4)
         faceROI = frame_gray[y:y+h,x:x+w]
         count = count + 1
-    return count
+    return count, faces
 
 
 def variance_of_laplacian(image): #Added this
@@ -132,13 +123,9 @@ def process_image(event, context):
     label_watch_phone_num = config.get("label_watch_phone_num", "")
     label_watch_sns_topic_arn = config.get("label_watch_sns_topic_arn", "")
 
-
-    
     # face detection
-    s3 = boto3.resource('s3') # added this
     face_cascade = cv2.CascadeClassifier()
-
-    if not face_cascade.load(read_xml(s3, 'clambda', 'haarcascade_frontalface_alt.xml')): # this is a hardcoded nameset
+    if not face_cascade.load('haarcascade_frontalface_alt.xml'):
         print('--(!)Error loading face cascade')
 
     #Iterate on frames fetched from Kinesis
@@ -214,11 +201,12 @@ def process_image(event, context):
         new_labels.append(new_label)
 
         # face detection
-        faces_count = faceDetect(image, face_cascade)
+        faces_count, faces = faceDetect(image, face_cascade)
         new_label = {}
-        new_label['Name'] = Faces
-        new_label['Quantity'] = decimal.Decimal(str(faces_count))
+        new_label['Name'] = 'Faces position: ' + str(faces) #Casting as string for now. numpy ndarray not supported in write to database
+        new_label['Confidence'] = decimal.Decimal(str(faces_count)) #Confidence is the key name, but it is displaying num faces
         new_labels.append(new_label)
+        print('Faces Detected: ' + str(faces_count))
 
         #Store frame image in S3
         s3_key = (s3_key_frames_root + '{}/{}/{}/{}/{}.jpg').format(year, mon, day, hour, frame_id)
